@@ -64,7 +64,13 @@ class LastUpdateManager : SensorManager {
         )
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val allSettings = sensorDao.getSettings(lastUpdate.id)
+        val allSettings = sensorDao.getSettings(lastUpdate.id).filter { setting ->
+            val shouldBeRemoved = (setting.value == "")
+            if (shouldBeRemoved) {
+                sensorDao.removeSetting(lastUpdate.id, setting.name)
+            }
+            !shouldBeRemoved
+        }
         val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
         if (shouldAddNewIntent) {
             val currentHighestIntentSettingOrdinal = allSettings.filter {
@@ -80,10 +86,6 @@ class LastUpdateManager : SensorManager {
             sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
             // add the new Intent
             sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
-        }
-        for (setting in allSettings) {
-            if (setting.value == "")
-                sensorDao.removeSetting(lastUpdate.id, setting.name)
         }
     }
 }
