@@ -94,9 +94,9 @@ class LastUpdateManager : SensorManager {
             val newIntentSettingName = "lastupdate_intent_var1:$newIntentSettingOrdinal:"
             val intentSettingAlreadyExists = allSettings.any { it.name == newIntentSettingName }
             check(!intentSettingAlreadyExists)
-            // turn off the toggle
+            // turn off the toggle:
             sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE))
-            // add the new Intent
+            // add the new Intent:
             sensorDao.add(SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING))
         }
     }
