@@ -86,7 +86,16 @@ class LastUpdateManager : SensorManager {
             }
         }
         if (!isSequenceContinuous) {
-            // TODO fix the DB entries to make their IDs a continuous sequence
+            // create new settings with sequential IDs:
+            val newIntentSettings = intentSettings.mapIndexed { index, it ->
+                it.copy(name = "lastupdate_intent_var1:${index + 1}:")
+            }
+            // delete old settings from DB:
+            intentSettings.forEach {
+                sensorDao.removeSetting(lastUpdate.id, it.name)
+            }
+            // add new settings to DB:
+            newIntentSettings.forEach(sensorDao::add)
         }
         val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
         if (shouldAddNewIntent) {
