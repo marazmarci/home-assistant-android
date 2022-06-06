@@ -72,19 +72,12 @@ class LastUpdateManager : SensorManager {
             }
             !shouldBeRemoved
         }
-        var isSequenceContinuous = true
-        var currentHighestIntentSettingOrdinal = 0
         val intentSettings = allSettings.filter {
             it.name.startsWith(INTENT_SETTING_PREFIX)
         }
-        intentSettings.forEachIndexed { index, setting ->
-            val currentOrdinal = setting.name.removePrefix(INTENT_SETTING_PREFIX).removeSuffix(":").toInt()
-            if (currentOrdinal != index + 1) {
-                isSequenceContinuous = false
-            }
-            if (currentOrdinal > currentHighestIntentSettingOrdinal) {
-                currentHighestIntentSettingOrdinal = currentOrdinal
-            }
+        val isSequenceContinuous = intentSettings.withIndex().all { (index, setting) ->
+            val ordinal = setting.name.removePrefix(INTENT_SETTING_PREFIX).removeSuffix(":").toInt()
+            ordinal == index + 1
         }
         if (!isSequenceContinuous) {
             // create new settings with sequential IDs:
@@ -100,7 +93,7 @@ class LastUpdateManager : SensorManager {
         }
         val shouldAddNewIntent = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }?.value == "true"
         if (shouldAddNewIntent) {
-            val newIntentSettingOrdinal = currentHighestIntentSettingOrdinal + 1
+            val newIntentSettingOrdinal = intentSettings.size + 1
             val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
             val intentSettingAlreadyExists = allSettings.any { it.name == newIntentSettingName }
             check(!intentSettingAlreadyExists)
