@@ -62,6 +62,7 @@ fun SettingsView(
     onClearFavorites: () -> Unit,
     onClickSetShortcuts: () -> Unit,
     onClickSensors: () -> Unit,
+    onClickSensorUpdateFrequency: () -> Unit,
     onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
@@ -201,6 +202,13 @@ fun SettingsView(
                     )
                 }
                 item {
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon.cmd_clock_fast,
+                        label = stringResource(id = commonR.string.sensor_update_frequency),
+                        onClick = onClickSensorUpdateFrequency
+                    )
+                }
+                item {
                     ListHeader(
                         id = commonR.string.account
                     )
@@ -237,6 +245,7 @@ private fun PreviewSettingsView() {
         onClearFavorites = {},
         onClickSetShortcuts = {},
         onClickSensors = {},
+        onClickSensorUpdateFrequency = {},
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,

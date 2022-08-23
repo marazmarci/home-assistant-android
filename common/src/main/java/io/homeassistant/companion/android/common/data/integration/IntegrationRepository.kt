@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
@@ -47,6 +48,8 @@ interface IntegrationRepository {
     suspend fun setTemplateTileContent(content: String)
     suspend fun getTemplateTileRefreshInterval(): Int
     suspend fun setTemplateTileRefreshInterval(interval: Int)
+    suspend fun getSensorUpdateFrequency(): SensorUpdateFrequencySetting
+    suspend fun setSensorUpdateFrequency(sensorUpdateFrequency: SensorUpdateFrequencySetting)
     suspend fun setWearHapticFeedback(enabled: Boolean)
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearToastConfirmation(enabled: Boolean)

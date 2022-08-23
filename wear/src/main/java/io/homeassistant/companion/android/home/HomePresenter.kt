@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.flow.Flow
 
 interface HomePresenter {
@@ -50,4 +51,6 @@ interface HomePresenter {
     suspend fun setTemplateTileContent(content: String)
     suspend fun getTemplateTileRefreshInterval(): Int
     suspend fun setTemplateTileRefreshInterval(interval: Int)
+    suspend fun getSensorUpdateFrequency(): SensorUpdateFrequencySetting
+    suspend fun setSensorUpdateFrequency(sensorUpdateFrequency: SensorUpdateFrequencySetting)
 }

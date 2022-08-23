@@ -19,6 +19,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.util.RegistriesDataHandler
@@ -31,6 +33,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val sensorsDao: SensorDao,
+    private val settingsDao: SettingsDao,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -95,6 +98,7 @@ class MainViewModel @Inject constructor(
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
+    var sensorUpdateFrequency = mutableStateOf(SensorUpdateFrequencySetting.NORMAL)
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
@@ -114,6 +118,7 @@ class MainViewModel @Inject constructor(
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+            sensorUpdateFrequency.value = settingsDao.get(0)?.sensorUpdateFrequency ?: SensorUpdateFrequencySetting.NORMAL
         }
     }
 
@@ -350,6 +355,15 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             homePresenter.setTemplateTileRefreshInterval(interval)
             templateTileRefreshInterval.value = interval
+        }
+    }
+
+    fun setSensorUpdateFrequency(sensorUpdateFrequency: SensorUpdateFrequencySetting) {
+        viewModelScope.launch {
+            settingsDao.get(0)?.let {
+                it.sensorUpdateFrequency = sensorUpdateFrequency
+                settingsDao.update(it)
+            }
         }
     }
 

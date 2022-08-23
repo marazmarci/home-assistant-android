@@ -26,6 +26,7 @@ private const val SCREEN_ENTITY_DETAIL = "entity_detail"
 private const val SCREEN_ENTITY_LIST = "entity_list"
 private const val SCREEN_MANAGE_SENSORS = "manage_all_sensors"
 private const val SCREEN_SINGLE_SENSOR_MANAGER = "sensor_manager"
+private const val SCREEN_SENSOR_UPDATE_FREQUENCY = "sensor_update_frequency"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
@@ -134,6 +135,11 @@ fun LoadHomePage(
                             SCREEN_MANAGE_SENSORS
                         )
                     },
+                    onClickSensorUpdateFrequency = {
+                        swipeDismissableNavController.navigate(
+                            SCREEN_SENSOR_UPDATE_FREQUENCY
+                        )
+                    },
                     onClickLogout = { mainViewModel.logout() },
                     isHapticEnabled = mainViewModel.isHapticEnabled.value,
                     isToastEnabled = mainViewModel.isToastEnabled.value,
@@ -205,6 +211,12 @@ fun LoadHomePage(
             composable(route = SCREEN_MANAGE_SENSORS) {
                 SensorsView(onClickSensorManager = {
                     swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
+                })
+            }
+            composable(route = SCREEN_SENSOR_UPDATE_FREQUENCY) {
+                SensorUpdateFrequencyView(
+                    onSelectSensorUpdateFrequency = {
+                    swipeDismissableNavController.navigate(SCREEN_SENSOR_UPDATE_FREQUENCY)
                 })
             }
             composable(

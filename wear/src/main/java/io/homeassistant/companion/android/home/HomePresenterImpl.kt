@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -244,5 +245,13 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun setTemplateTileRefreshInterval(interval: Int) {
         integrationUseCase.setTemplateTileRefreshInterval(interval)
+    }
+
+    override suspend fun getSensorUpdateFrequency(): SensorUpdateFrequencySetting {
+        return integrationUseCase.getSensorUpdateFrequency()
+    }
+
+    override suspend fun setSensorUpdateFrequency(sensorUpdateFrequency: SensorUpdateFrequencySetting) {
+        integrationUseCase.setSensorUpdateFrequency(sensorUpdateFrequency)
     }
 }
