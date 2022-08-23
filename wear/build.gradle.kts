@@ -40,17 +40,6 @@ android {
         targetCompatibility(JavaVersion.VERSION_11)
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-    }
-
     buildTypes {
         named("debug").configure {
             applicationIdSuffix = ".debug"
@@ -58,15 +47,19 @@ android {
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
-            signingConfig = signingConfigs.getByName("release")
         }
     }
 
     kotlinOptions {
         jvmTarget = "11"
-        // Temporarily required to implement an interface from Compose because they use @JvmDefault
-        // Remove when kotlin-gradle-plugin is >=1.6.20 (https://issuetracker.google.com/issues/217593040)
-        freeCompilerArgs = freeCompilerArgs + "-Xjvm-default=all"
+        freeCompilerArgs = freeCompilerArgs + listOf(
+            // Temporarily required to implement an interface from Compose because they use @JvmDefault
+            // Remove when kotlin-gradle-plugin is >=1.6.20 (https://issuetracker.google.com/issues/217593040)
+            "-Xjvm-default=all",
+            // run ./gradlew --rerun-tasks assembleRelease to generate Compose Compiler report files
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.toString() + "/compose_metrics"  // you will find the report files in the "wear/build/compose_metrics/" folder
+        )
     }
 
     lint {

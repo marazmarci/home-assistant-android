@@ -39,7 +39,12 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
+        freeCompilerArgs = freeCompilerArgs + listOf(
+            // run ./gradlew --rerun-tasks assembleRelease to generate Compose Compiler report files
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" + project.buildDir.toString() + "/compose_metrics" // you will find the report files in the "app/build/compose_metrics/" folder
+        )
     }
 
     compileOptions {
@@ -53,17 +58,6 @@ android {
         groups = "continuous-deployment"
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
-            enableV1Signing = true
-            enableV2Signing = true
-        }
-    }
-
     buildTypes {
         named("debug").configure {
             applicationIdSuffix = ".debug"
@@ -71,7 +65,6 @@ android {
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
-            signingConfig = signingConfigs.getByName("release")
         }
     }
     flavorDimensions.add("version")
