@@ -28,7 +28,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
-        private const val PREF_KEY_ALIAS = "key-alias"
+        private const val PREF_CLIENT_CERTIFICATE_CHAIN_ALIAS = "key-alias"
         private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
     }
 
@@ -181,11 +181,11 @@ class PrefsRepositoryImpl @Inject constructor(
         localStorage.putBoolean(PREF_CRASH_REPORTING_DISABLED, !crashReportingEnabled)
     }
 
-    override suspend fun saveKeyAlias(alias: String) {
-        localStorage.putString(PREF_KEY_ALIAS, alias)
+    override suspend fun saveClientCertificateChainAlias(alias: String) {
+        localStorage.putString(PREF_CLIENT_CERTIFICATE_CHAIN_ALIAS, alias)
     }
 
-    override suspend fun getKeyAlias(): String? {
-        return localStorage.getString(PREF_KEY_ALIAS)
+    override suspend fun getClientCertificateChainAlias(): String? {
+        return localStorage.getString(PREF_CLIENT_CERTIFICATE_CHAIN_ALIAS)
     }
 }

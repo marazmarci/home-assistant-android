@@ -44,11 +44,10 @@ class HomeAssistantApis @Inject constructor(
         // Only deal with cookies when on non wear device and for now I don't have a better
         // way to determine if we are really on wear os....
         // TODO: Please fix me.
-        var cookieManager: CookieManager? = null
-        try {
-            cookieManager = CookieManager.getInstance()
+        val cookieManager: CookieManager? = try {
+            CookieManager.getInstance()
         } catch (e: Exception) {
-            // Noop
+            null
         }
         if (cookieManager != null) {
             builder.cookieJar(CookieJarCookieManagerShim())

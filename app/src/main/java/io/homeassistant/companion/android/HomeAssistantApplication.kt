@@ -27,13 +27,14 @@ import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    private val ioScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Inject
     lateinit var prefsRepository: PrefsRepository

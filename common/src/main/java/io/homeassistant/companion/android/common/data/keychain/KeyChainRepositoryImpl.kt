@@ -5,9 +5,11 @@ import android.security.KeyChain
 import android.util.Log
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class KeyChainRepositoryImpl @Inject constructor(
@@ -18,59 +20,63 @@ class KeyChainRepositoryImpl @Inject constructor(
         private const val TAG = "KeyChainRepository"
     }
 
-    private var alias: String? = null
-    private var key: PrivateKey? = null
+    private var certificateChainAlias: String? = null
+    private var privateKey: PrivateKey? = null
     private var chain: Array<X509Certificate>? = null
+    // TODO SharedFlow / StateFlow ???
 
     override suspend fun clear() {
-        prefsRepository.saveKeyAlias("")
+        prefsRepository.saveClientCertificateChainAlias("")
     }
 
     override suspend fun load(context: Context, alias: String) {
-        this.alias = alias
-        prefsRepository.saveKeyAlias(alias)
+        this.certificateChainAlias = alias
+        prefsRepository.saveClientCertificateChainAlias(alias)
         load(context)
     }
 
     override suspend fun load(context: Context) = withContext(Dispatchers.IO) {
-        if (alias == null) {
-            alias = prefsRepository.getKeyAlias()
+        if (certificateChainAlias == null) {
+            certificateChainAlias = prefsRepository.getClientCertificateChainAlias()
         }
 
         doLoad(context)
     }
 
     override fun getAlias(): String? {
-        return alias
+        return certificateChainAlias
     }
 
     override fun getPrivateKey(): PrivateKey? {
-        return key
+        return privateKey
     }
 
     override fun getCertificateChain(): Array<X509Certificate>? {
         return chain
     }
 
-    @Synchronized
-    private fun doLoad(context: Context) {
-        if (alias != null && alias?.isNotEmpty() == true) {
-            if (chain == null) {
-                chain = try {
-                    KeyChain.getCertificateChain(context, alias!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exception getting certificate chain", e)
-                    null
+    private suspend fun doLoad(context: Context): Unit = withContext(Dispatchers.IO) {
+        synchronized(Lock) { // TODO different mutex solution?
+            certificateChainAlias?.takeIf { it.isNotEmpty() }?.let { alias ->
+                if (chain == null) {
+                    chain = try {
+                        KeyChain.getCertificateChain(context, alias)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Exception getting certificate chain", e)
+                        null
+                    }
                 }
-            }
-            if (key == null) {
-                key = try {
-                    KeyChain.getPrivateKey(context, alias!!)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Exception getting private key", e)
-                    null
+                if (privateKey == null) {
+                    privateKey = try {
+                        KeyChain.getPrivateKey(context, alias)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Exception getting private key", e)
+                        null
+                    }
                 }
             }
         }
     }
 }
+
+private object Lock

@@ -59,7 +59,7 @@ interface PrefsRepository {
 
     suspend fun setCrashReporting(crashReportingEnabled: Boolean)
 
-    suspend fun saveKeyAlias(alias: String)
+    suspend fun saveClientCertificateChainAlias(alias: String)
 
-    suspend fun getKeyAlias(): String?
+    suspend fun getClientCertificateChainAlias(): String?
 }

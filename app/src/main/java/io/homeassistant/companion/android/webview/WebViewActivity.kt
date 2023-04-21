@@ -1293,8 +1293,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
                 waitForConnection()
             }
-            alert.setNeutralButton(commonR.string.wait) { _, _ ->
-                waitForConnection()
+            alert.setNeutralButton("Select mTLS client certificate") { _, _ ->
+                //waitForConnection()
+
             }
         }
         alertDialog = alert.create()

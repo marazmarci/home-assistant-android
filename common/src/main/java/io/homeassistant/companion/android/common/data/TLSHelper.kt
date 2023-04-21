@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data
 
+import android.util.Log
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -10,11 +11,14 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLEngine
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.net.ssl.X509TrustManager
 
-class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepository) {
+class TLSHelper @Inject constructor(
+    private val keyChainRepository: KeyChainRepository
+) {
 
     fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) {
         val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -28,57 +32,70 @@ class TLSHelper @Inject constructor(private val keyChainRepository: KeyChainRepo
     }
 
     private fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {
+        Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP()")
         return object : X509ExtendedKeyManager() {
+            override fun chooseEngineClientAlias(
+                keyType: Array<out String>?,
+                issuers: Array<out Principal>?,
+                engine: SSLEngine?
+            ): String {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: chooseEngineClientAlias(keyType = ${keyType?.toList()}, issuers = ${issuers?.toList()}, engine = $engine)")
+                return super.chooseEngineClientAlias(keyType, issuers, engine)
+            }
+
+            override fun chooseEngineServerAlias(
+                keyType: String?,
+                issuers: Array<out Principal>?,
+                engine: SSLEngine?
+            ): String {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: chooseEngineServerAlias(keyType = ${keyType?.toList()}, issuers = ${issuers?.toList()}, engine = $engine)")
+                return super.chooseEngineServerAlias(keyType, issuers, engine)
+            }
+
             override fun getClientAliases(
-                p0: String?,
-                p1: Array<out Principal>?
+                keyType: String?,
+                issuers: Array<out Principal>?
             ): Array<String> {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: getClientAliases(keyType = $keyType, issuers = ${issuers?.toList()})")
                 return emptyArray()
             }
 
             override fun chooseClientAlias(
-                p0: Array<out String>?,
-                p1: Array<out Principal>?,
-                p2: Socket?
+                keyType: Array<out String>?,
+                issuers: Array<out Principal>?,
+                socket: Socket?
             ): String {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: chooseClientAlias(keyType = ${keyType?.toList()}, issuers = ${issuers?.toList()}, socket = $socket)")
                 return ""
             }
 
             override fun getServerAliases(
-                p0: String?,
-                p1: Array<out Principal>?
+                keyType: String?,
+                issuers: Array<out Principal>?
             ): Array<String> {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: getServerAliases(keyType = $keyType, issuers = ${issuers?.toList()})")
                 return arrayOf()
             }
 
             override fun chooseServerAlias(
-                p0: String?,
-                p1: Array<out Principal>?,
-                p2: Socket?
+                keyType: String?,
+                issuers: Array<out Principal>?,
+                socket: Socket?
             ): String {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: chooseServerAlias(keyType = $keyType, issuers = ${issuers?.toList()}, socket = $socket)")
                 return ""
             }
 
-            override fun getCertificateChain(p0: String?): Array<X509Certificate>? {
-                var chain: Array<X509Certificate>?
-
-                // block until a chain is provided via the TLSWebView
-                runBlocking {
-                    chain = keyChainRepository.getCertificateChain()
-                }
-
-                return chain
+            // TODO use the alias parameter?
+            override fun getCertificateChain(alias: String?): Array<X509Certificate>? {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: getCertificateChain(alias = $alias)")
+                return keyChainRepository.getCertificateChain()
             }
 
-            override fun getPrivateKey(p0: String?): PrivateKey? {
-                var key: PrivateKey?
-
-                // block until a key is provided via the TLSWebView
-                runBlocking {
-                    key = keyChainRepository.getPrivateKey()
-                }
-
-                return key
+            // TODO use the alias parameter?
+            override fun getPrivateKey(alias: String?): PrivateKey? {
+                Log.i("RUBBERDUCK", "TLSHelper::getMTLSKeyManagerForOKHTTP: getPrivateKey(alias = $alias)")
+                return keyChainRepository.getPrivateKey()
             }
         }
     }

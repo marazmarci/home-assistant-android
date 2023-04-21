@@ -12,6 +12,7 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import io.homeassistant.companion.android.common.data.keychain.KeyChainHelper
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import kotlinx.coroutines.launch
 import java.security.Principal
@@ -20,7 +21,9 @@ import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 
-open class TLSWebViewClient @Inject constructor(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
+open class TLSWebViewClient @Inject constructor(
+    private val keyChainRepository: KeyChainRepository
+) : WebViewClient() {
 
     var isTLSClientAuthNeeded = false
         private set
@@ -71,8 +74,8 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
                         checkChainValidity()
                         request.proceed(key, chain)
                     } else {
-                        // If no key is available, then the user must be prompt for a key
-                        // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
+                        // If no key is available, then the user must be prompted for a key
+                        // The whole operation is wrapped in the selectPrivateKey method but caution as it must occur outside of the main thread
                         // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
                         selectClientCert(activity, request.principals, request)
                     }
@@ -84,32 +87,25 @@ open class TLSWebViewClient @Inject constructor(private var keyChainRepository: 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun selectClientCert(activity: Activity, principals: Array<Principal>?, request: ClientCertRequest) {
         require(activity is AppCompatActivity)
+        activity.lifecycleScope.launch {
+            val privateKeyAlias = KeyChainHelper.choosePrivateKeyAlias(activity, principals)
+            if (privateKeyAlias != null) {
+                // Load the key and the chain
+                keyChainRepository.load(activity.applicationContext, privateKeyAlias)
 
-        val kcac = KeyChainAliasCallback { alias ->
-            if (alias != null) {
-                activity.lifecycleScope.launch {
-                    // Load the key and the chain
-                    keyChainRepository.load(activity.applicationContext, alias)
+                key = keyChainRepository.getPrivateKey()
+                chain = keyChainRepository.getCertificateChain()
 
-                    key = keyChainRepository.getPrivateKey()
-                    chain = keyChainRepository.getCertificateChain()
-
-                    // If we got the key and the cert
-                    if (key == null || chain == null) {
-                        // Either the user didn't choose a key or no key was available
-                        hasUserDeniedAccess = true
-                    }
-
-                    checkChainValidity()
-                    request.proceed(key, chain)
+                // If we got the key and the cert
+                if (key == null || chain == null) {
+                    // Either the user didn't choose a key or no key was available
+                    hasUserDeniedAccess = true
                 }
-            } else {
-                request.proceed(key, chain)
-            }
-        }
 
-        // prompt the user for a key
-        KeyChain.choosePrivateKeyAlias(activity, kcac, arrayOf<String>(), principals, null, null)
+                checkChainValidity()
+            }
+            request.proceed(key, chain)
+        }
     }
 
     private fun checkChainValidity() {
