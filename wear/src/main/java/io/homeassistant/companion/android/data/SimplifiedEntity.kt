@@ -6,9 +6,11 @@ data class SimplifiedEntity(
     val icon: String = ""
 ) {
     constructor(entityString: String) : this(
-        entityString.split(",")[0],
-        entityString.split(",")[1],
-        entityString.split(",")[2]
+        entityString.split(",").first(),
+        entityString.split(",").run {
+            subList(1, lastIndex - 1)
+        }.joinToString(","),
+        entityString.split(",").last()
     )
 
     val domain: String
