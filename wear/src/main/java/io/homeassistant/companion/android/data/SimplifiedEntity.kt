@@ -16,4 +16,6 @@ data class SimplifiedEntity(
 
     val entityString: String
         get() = "$entityId,$friendlyName,$icon"
+
+    var isActive: Boolean? = null
 }

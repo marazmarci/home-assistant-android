@@ -36,6 +36,7 @@ class TileActionReceiver : BroadcastReceiver() {
                         entityId = entityId,
                         integrationRepository = serverManager.integrationRepository()
                     )
+                    ShortcutsTile.requestUpdate(context!!)
                 } catch (e: Exception) {
                     Log.e(TAG, "Cannot call tile service", e)
                 }

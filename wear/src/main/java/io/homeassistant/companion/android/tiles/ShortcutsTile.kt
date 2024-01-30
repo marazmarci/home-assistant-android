@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.wear.protolayout.ActionBuilders
+import androidx.wear.protolayout.ColorBuilders.ColorProp
 import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders.dp
 import androidx.wear.protolayout.DimensionBuilders.sp
@@ -34,20 +36,28 @@ import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 import io.homeassistant.companion.android.common.R as commonR
 
 // Dimensions (dp)
@@ -63,11 +73,60 @@ class ShortcutsTile : TileService() {
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
+    private var entitySubscriptionJob: Job? = null
+
     @Inject
     lateinit var serverManager: ServerManager
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
+
+    @OptIn(FlowPreview::class)
+    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        entitySubscriptionJob = serviceScope.launch {
+            Log.d("RUBBERDUCK", "ShortcutsTile entitySubscriptionJob launch")
+            val tileId = requestParams.tileId
+            val simplifiedEntities = getEntities(tileId)
+            val entityIds = simplifiedEntities.map { it.entityId }
+            val entityStateFlow = flow {
+                launch {
+                    //serverManager.integrationRepository().getEntityUpdates(entityIds)?.let { emitAll(it) }
+                    serverManager.integrationRepository().getEntityUpdates(entityIds)?.collect {
+                        Log.d("RUBBERDUCK", "ShortcutsTile entity update: $it")
+                        emit(it)
+                    }
+                }
+                entityIds.forEach { entityId ->
+                    val entity = serverManager.integrationRepository().getEntity(entityId)
+                    Log.d("RUBBERDUCK", "ShortcutsTile entity initial state: $entity")
+                    emit(entity)
+                }
+            }
+
+            entityStateFlow.mapNotNull {
+                Log.d("RUBBERDUCK", "ShortcutsTile mapNotNull")
+                it?.entityId?.let { entityId ->
+                    it.isActive()?.let { isActive ->
+                        entityId to isActive
+                    }
+                }
+            }.onEach { (entityId, isActive) ->
+                Log.d("RUBBERDUCK", "ShortcutsTile onEach")
+                entityStates[entityId] = isActive
+            }.debounce(500.milliseconds).collect {
+                Log.d("RUBBERDUCK", "ShortcutsTile requesting update")
+                requestUpdate(this@ShortcutsTile)
+            }
+        }
+        entitySubscriptionJob?.invokeOnCompletion {
+            Log.d("RUBBERDUCK", "ShortcutsTile entitySubscriptionJob completed")
+        }
+    }
+
+    override fun onTileLeaveEvent(requestParams: EventBuilders.TileLeaveEvent) {
+        entitySubscriptionJob?.cancel()
+        entitySubscriptionJob = null
+    }
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
@@ -111,35 +170,41 @@ class ShortcutsTile : TileService() {
             Resources.Builder()
                 .setVersion(entities.toString())
                 .apply {
-                    entities.map { entity ->
-                        // Find icon and create Bitmap
-                        val iconIIcon = getIcon(
-                            entity.icon,
-                            entity.domain,
-                            this@ShortcutsTile
-                        )
-                        val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
-                            colorInt = Color.WHITE
-                            sizeDp = iconSize.roundToInt()
-                            backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
-                        }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
-
-                        // Make array of bitmap
-                        val bitmapData = ByteBuffer.allocate(iconBitmap.byteCount).apply {
-                            iconBitmap.copyPixelsToBuffer(this)
-                        }.array()
-
-                        // link the entity id to the bitmap data array
-                        entity.entityId to ResourceBuilders.ImageResource.Builder()
-                            .setInlineResource(
-                                ResourceBuilders.InlineImageResource.Builder()
-                                    .setData(bitmapData)
-                                    .setWidthPx(iconSizePx)
-                                    .setHeightPx(iconSizePx)
-                                    .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
-                                    .build()
+                    entities.flatMap { entity ->
+                        listOf(true, false, null).map { entityState ->
+                            // Find icon and create Bitmap
+                            val iconIIcon = getIcon(
+                                entity.icon,
+                                entity.domain,
+                                this@ShortcutsTile
                             )
-                            .build()
+                            val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
+                                colorInt = when(entity.isActive) {
+                                    true -> resources.getColor(commonR.color.colorDeviceControlsLightOn, null)
+                                    false -> resources.getColor(commonR.color.colorDeviceControlsOff, null)
+                                    null -> Color.WHITE
+                                }
+                                sizeDp = iconSize.roundToInt()
+                                backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
+                            }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
+
+                            // Make array of bitmap
+                            val bitmapData = ByteBuffer.allocate(iconBitmap.byteCount).apply {
+                                iconBitmap.copyPixelsToBuffer(this)
+                            }.array()
+
+                            // link the entity id to the bitmap data array
+                            "${entity.entityId}-$entityState" to ResourceBuilders.ImageResource.Builder()
+                                .setInlineResource(
+                                    ResourceBuilders.InlineImageResource.Builder()
+                                        .setData(bitmapData)
+                                        .setWidthPx(iconSizePx)
+                                        .setHeightPx(iconSizePx)
+                                        .setFormat(ResourceBuilders.IMAGE_FORMAT_RGB_565)
+                                        .build()
+                                )
+                                .build()
+                        }
                     }.forEach { (id, imageResource) ->
                         addIdToImageMapping(id, imageResource)
                     }
@@ -188,6 +253,13 @@ class ShortcutsTile : TileService() {
         val entities = getEntities(tileId)
         val showLabels = wearPrefsRepository.getShowShortcutText()
 
+        Log.d("RUBBERDUCK", "ShortcutsTile updating entityStates map: $entityStates")
+        entities.forEach {
+            entityStates[it.entityId]?.let { isActive ->
+                it.isActive = isActive
+            }
+        }
+
         return Timeline.fromLayoutElement(layout(entities, showLabels))
     }
 
@@ -226,6 +298,15 @@ class ShortcutsTile : TileService() {
         setWidth(dp(CIRCLE_SIZE))
         setHeight(dp(CIRCLE_SIZE))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
+        Log.d("RUBBERDUCK", "ShortcutsTile setting color for ${entity.entityId}, isActive = ${entity.isActive}")
+        val colorRes = when(entity.isActive) {
+            true -> commonR.color.colorDeviceControlsLightOn
+            false -> commonR.color.colorDeviceControlsOff
+            null -> null
+        }
+        val colorInt = colorRes?.let {
+            resources.getColor(it, null)
+        }
         setModifiers(
             ModifiersBuilders.Modifiers.Builder()
                 // Set circular background
@@ -253,7 +334,7 @@ class ShortcutsTile : TileService() {
         addContent(
             // Add icon
             LayoutElementBuilders.Image.Builder()
-                .setResourceId(entity.entityId)
+                .setResourceId("${entity.entityId}-${entity.isActive}")
                 .setWidth(dp(iconSize))
                 .setHeight(dp(iconSize))
                 .build()
@@ -267,6 +348,11 @@ class ShortcutsTile : TileService() {
                             .setFontStyle(
                                 LayoutElementBuilders.FontStyle.Builder()
                                     .setSize(sp(TEXT_SIZE))
+                                    .apply {
+                                        colorInt?.let {
+                                            setColor(ColorProp.Builder(colorInt).build())
+                                        }
+                                    }
                                     .build()
                             )
                             .build()
@@ -286,6 +372,9 @@ class ShortcutsTile : TileService() {
         .build()
 
     companion object {
+        // TODO convert to instance property
+        private var entityStates = mutableMapOf<String, Boolean>() // TODO replace this with a better solution, as it doesn't persist previously known state (consider multiple Tiles)
+
         fun requestUpdate(context: Context) {
             getUpdater(context).requestUpdate(ShortcutsTile::class.java)
         }
