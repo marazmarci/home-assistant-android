@@ -83,6 +83,9 @@ class ShortcutsTile : TileService() {
 
     @OptIn(FlowPreview::class)
     override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
+        if (entitySubscriptionJob?.isActive == true) {
+            return
+        }
         entitySubscriptionJob = serviceScope.launch {
             Log.d("RUBBERDUCK", "ShortcutsTile entitySubscriptionJob launch")
             val tileId = requestParams.tileId
@@ -121,11 +124,6 @@ class ShortcutsTile : TileService() {
         entitySubscriptionJob?.invokeOnCompletion {
             Log.d("RUBBERDUCK", "ShortcutsTile entitySubscriptionJob completed")
         }
-    }
-
-    override fun onTileLeaveEvent(requestParams: EventBuilders.TileLeaveEvent) {
-        entitySubscriptionJob?.cancel()
-        entitySubscriptionJob = null
     }
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
@@ -243,6 +241,7 @@ class ShortcutsTile : TileService() {
         super.onDestroy()
         // Cleans up the coroutine
         serviceJob.cancel()
+        entitySubscriptionJob = null
     }
 
     private suspend fun getEntities(tileId: Int): List<SimplifiedEntity> {
