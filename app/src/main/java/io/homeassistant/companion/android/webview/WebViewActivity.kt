@@ -1378,14 +1378,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 finishAffinity()
             }
         } else if (errorType == ErrorType.SECURITY_WARNING) {
-            alert.setTitle(commonR.string.security_vulnerably_title)
-            alert.setMessage(commonR.string.security_vulnerably_message)
-            alert.setPositiveButton(commonR.string.security_vulnerably_view) { _, _ ->
+            alert.setTitle(commonR.string.security_vulnerability_title)
+            alert.setMessage(commonR.string.security_vulnerability_message)
+            alert.setPositiveButton(commonR.string.security_vulnerability_view) { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse("https://www.home-assistant.io/latest-security-alert/")
                 startActivity(intent)
             }
-            alert.setNegativeButton(commonR.string.security_vulnerably_understand) { _, _ ->
+            alert.setNegativeButton(commonR.string.security_vulnerability_understand) { _, _ ->
                 // Noop
             }
         } else {
