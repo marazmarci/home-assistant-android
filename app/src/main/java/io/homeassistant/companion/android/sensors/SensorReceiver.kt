@@ -53,9 +53,9 @@ class SensorReceiver : SensorReceiverBase() {
     companion object {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
-            ActivitySensorManager(),
-            AndroidAutoSensorManager(),
-            AndroidOsSensorManager(),
+            ActivitySensorManager(true),
+            AndroidAutoSensorManager(true),
+            AndroidOsSensorManager(true),
             AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
@@ -71,12 +71,12 @@ class SensorReceiver : SensorReceiverBase() {
             LastRebootSensorManager(),
             LastUpdateManager(),
             LightSensorManager(),
-            LocationSensorManager(),
+            LocationSensorManager(true),
             MobileDataManager(),
             NetworkSensorManager(),
             NfcSensorManager(),
             NextAlarmManager(),
-            NotificationSensorManager(),
+            NotificationSensorManager(true),
             PhoneStateSensorManager(),
             PowerSensorManager(),
             PressureSensorManager(),

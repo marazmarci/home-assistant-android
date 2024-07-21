@@ -16,6 +16,7 @@ import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.InstanceCountTracker
+import io.homeassistant.companion.android.common.InstantiationSourceProvider
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
@@ -23,7 +24,9 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
-class ActivitySensorManager : BroadcastReceiver(), SensorManager {
+class ActivitySensorManager(
+    override val manuallyInstantiated: Boolean = false
+) : BroadcastReceiver(), SensorManager, InstantiationSourceProvider {
 
     private val instanceCount by InstanceCountTracker()
 

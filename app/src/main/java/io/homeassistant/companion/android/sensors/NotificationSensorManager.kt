@@ -17,13 +17,16 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.InstanceCountTracker
+import io.homeassistant.companion.android.common.InstantiationSourceProvider
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 
-class NotificationSensorManager : NotificationListenerService(), SensorManager {
+class NotificationSensorManager(
+    override val manuallyInstantiated: Boolean = false
+) : NotificationListenerService(), SensorManager, InstantiationSourceProvider {
 
     private val instanceCount by InstanceCountTracker()
 

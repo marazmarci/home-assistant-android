@@ -4,10 +4,13 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.common.InstanceCountTracker
+import io.homeassistant.companion.android.common.InstantiationSourceProvider
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 
-class AndroidOsSensorManager : SensorManager {
+class AndroidOsSensorManager(
+    override val manuallyInstantiated: Boolean = false
+) : SensorManager, InstantiationSourceProvider {
 
     private val instanceCount by InstanceCountTracker()
 
