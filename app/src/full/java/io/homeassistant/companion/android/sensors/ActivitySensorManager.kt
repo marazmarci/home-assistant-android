@@ -15,6 +15,7 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.InstanceCountTracker
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
@@ -23,6 +24,12 @@ import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
+
+    private val instanceCount by InstanceCountTracker()
+
+    init {
+        Log.i("RUBBERDUCK", "ActivitySensorManager instanceCount = $instanceCount")
+    }
 
     companion object {
 

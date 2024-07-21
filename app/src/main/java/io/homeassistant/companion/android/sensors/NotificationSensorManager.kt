@@ -16,6 +16,7 @@ import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import io.homeassistant.companion.android.common.InstanceCountTracker
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
@@ -23,6 +24,13 @@ import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
+
+    private val instanceCount by InstanceCountTracker()
+
+    init {
+        Log.i("RUBBERDUCK", "NotificationSensorManager instanceCount = $instanceCount")
+    }
+
     companion object {
         private const val TAG = "NotificationManager"
         private const val SETTING_ALLOW_LIST = "notification_allow_list"

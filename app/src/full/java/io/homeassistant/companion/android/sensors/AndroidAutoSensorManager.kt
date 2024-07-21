@@ -5,6 +5,7 @@ import android.os.Build
 import android.util.Log
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
+import io.homeassistant.companion.android.common.InstanceCountTracker
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlinx.coroutines.CoroutineScope
@@ -13,6 +14,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class AndroidAutoSensorManager : SensorManager, Observer<Int> {
+
+    private val instanceCount by InstanceCountTracker()
+
+    init {
+        Log.i("RUBBERDUCK", "AndroidAutoSensorManager instanceCount = $instanceCount")
+    }
 
     companion object {
 

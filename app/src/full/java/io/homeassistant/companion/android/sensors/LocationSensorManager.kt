@@ -27,6 +27,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.InstanceCountTracker
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -59,6 +60,12 @@ import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
+
+    private val instanceCount by InstanceCountTracker()
+
+    init {
+        Log.i("RUBBERDUCK", "LocationSensorManager instanceCount = $instanceCount")
+    }
 
     companion object {
         private const val SETTING_SEND_LOCATION_AS = "location_send_as"

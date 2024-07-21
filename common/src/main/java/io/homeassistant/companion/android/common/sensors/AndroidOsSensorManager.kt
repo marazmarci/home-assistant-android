@@ -2,10 +2,18 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
+import io.homeassistant.companion.android.common.InstanceCountTracker
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 
 class AndroidOsSensorManager : SensorManager {
+
+    private val instanceCount by InstanceCountTracker()
+
+    init {
+        Log.i("RUBBERDUCK", "AndroidOsSensorManager instanceCount = $instanceCount")
+    }
 
     companion object {
         val osVersion = SensorManager.BasicSensor(
