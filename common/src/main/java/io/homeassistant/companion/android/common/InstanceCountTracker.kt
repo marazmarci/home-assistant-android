@@ -12,9 +12,9 @@ class InstanceCountTracker<ThisType : Any> {
         if (!::receiver.isInitialized) {
             receiver = thisRef
             receiverType = thisRef::class
-            alreadyCountedInstances[receiverType]!! += thisRef
-         }
-        return alreadyCountedInstances[receiverType]!!.size
+            alreadyCountedInstances.getValue(receiverType) += thisRef
+        }
+        return alreadyCountedInstances.getValue(receiverType).size
     }
 
     companion object {
