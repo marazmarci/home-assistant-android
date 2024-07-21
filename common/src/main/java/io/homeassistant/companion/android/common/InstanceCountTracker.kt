@@ -12,7 +12,9 @@ class InstanceCountTracker<ThisType : Any> {
         if (!::receiver.isInitialized) {
             receiver = thisRef
             receiverType = thisRef::class
-            alreadyCountedInstances.getValue(receiverType) += thisRef
+            val set = alreadyCountedInstances.getValue(receiverType)
+            set += thisRef
+            alreadyCountedInstances[receiverType] = set
         }
         return alreadyCountedInstances.getValue(receiverType).size
     }
