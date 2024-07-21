@@ -31,7 +31,7 @@ class ActivitySensorManager(
     private val instanceCount by InstanceCountTracker()
 
     init {
-        Log.i("RUBBERDUCK", "ActivitySensorManager instanceCount = $instanceCount")
+        Log.i("RUBBERDUCK", "ActivitySensorManager instanceCount = $instanceCount, manuallyInstantiated = $manuallyInstantiated")
     }
 
     companion object {

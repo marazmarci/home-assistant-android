@@ -31,7 +31,7 @@ class NotificationSensorManager(
     private val instanceCount by InstanceCountTracker()
 
     init {
-        Log.i("RUBBERDUCK", "NotificationSensorManager instanceCount = $instanceCount")
+        Log.i("RUBBERDUCK", "NotificationSensorManager instanceCount = $instanceCount, manuallyInstantiated = $manuallyInstantiated")
     }
 
     companion object {

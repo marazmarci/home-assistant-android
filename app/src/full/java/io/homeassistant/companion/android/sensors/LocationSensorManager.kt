@@ -67,7 +67,7 @@ class LocationSensorManager(
     private val instanceCount by InstanceCountTracker()
 
     init {
-        Log.i("RUBBERDUCK", "LocationSensorManager instanceCount = $instanceCount")
+        Log.i("RUBBERDUCK", "LocationSensorManager instanceCount = $instanceCount, manuallyInstantiated = $manuallyInstantiated")
     }
 
     companion object {

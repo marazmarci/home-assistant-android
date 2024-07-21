@@ -15,7 +15,7 @@ class AndroidOsSensorManager(
     private val instanceCount by InstanceCountTracker()
 
     init {
-        Log.i("RUBBERDUCK", "AndroidOsSensorManager instanceCount = $instanceCount")
+        Log.i("RUBBERDUCK", "AndroidOsSensorManager instanceCount = $instanceCount, manuallyInstantiated = $manuallyInstantiated")
     }
 
     companion object {
