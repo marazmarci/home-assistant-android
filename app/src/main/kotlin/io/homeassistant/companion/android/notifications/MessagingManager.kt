@@ -701,10 +701,12 @@ class MessagingManager @Inject constructor(
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                     notifyMissingPermission(message.toString(), serverId)
                 } else {
+                    val isRelativeVolume = data[NotificationData.RELATIVE_VOLUME]?.toBoolean() == true
                     processStreamVolume(
                         audioManager!!,
                         data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt(),
+                        isRelativeVolume,
                     )
                 }
             }
@@ -1810,34 +1812,46 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
-        when (stream) {
-            NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
-            NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
-            NotificationData.NOTIFICATION_STREAM -> adjustVolumeStream(
-                AudioManager.STREAM_NOTIFICATION,
-                volume,
-                audioManager,
-            )
-
-            NotificationData.RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
-            NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
-            NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
-            NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
-            else -> Timber.d("Skipping command due to invalid channel stream")
+    private fun processStreamVolume(
+        audioManager: AudioManager,
+        stream: String,
+        volume: Int,
+        isRelative: Boolean,
+    ) {
+        val streamType = when (stream) {
+            NotificationData.ALARM_STREAM -> AudioManager.STREAM_ALARM
+            NotificationData.MUSIC_STREAM -> AudioManager.STREAM_MUSIC
+            NotificationData.NOTIFICATION_STREAM -> AudioManager.STREAM_NOTIFICATION
+            NotificationData.RING_STREAM -> AudioManager.STREAM_RING
+            NotificationData.CALL_STREAM -> AudioManager.STREAM_VOICE_CALL
+            NotificationData.SYSTEM_STREAM -> AudioManager.STREAM_SYSTEM
+            NotificationData.DTMF_STREAM -> AudioManager.STREAM_DTMF
+            else -> {
+                Timber.d("Skipping command due to invalid channel stream")
+                return
+            }
         }
+
+        adjustVolumeStream(streamType, volume, audioManager, isRelative)
     }
 
-    private fun adjustVolumeStream(stream: Int, volume: Int, audioManager: AudioManager) {
-        var volumeLevel = volume
-        if (volumeLevel > audioManager.getStreamMaxVolume(stream)) {
-            volumeLevel = audioManager.getStreamMaxVolume(stream)
-        } else if (volumeLevel < 0) {
-            volumeLevel = 0
+    private fun adjustVolumeStream(streamType: Int, volume: Int, audioManager: AudioManager, isRelative: Boolean) {
+        val volumeLevel = if (isRelative) {
+            // Get current volume and add/subtract the adjustment
+            val currentVolume = audioManager.getStreamVolume(streamType)
+            currentVolume + volume
+        } else {
+            // Use provided value directly
+            volume
         }
+
+        // Clamp to valid range [0, maxVolume]
+        val maxVolume = audioManager.getStreamMaxVolume(streamType)
+        val clampedVolume = volumeLevel.coerceIn(0, maxVolume)
+
         audioManager.setStreamVolume(
-            stream,
-            volumeLevel,
+            streamType,
+            clampedVolume,
             AudioManager.FLAG_SHOW_UI,
         )
     }
