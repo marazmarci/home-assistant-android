@@ -714,15 +714,12 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_VOLUME_LEVEL -> {
-                val audioManager =
-                    context.getSystemService<AudioManager>()
                 val notificationManager = context.getSystemService<NotificationManager>()
                 if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                     notifyMissingPermission(message, serverId)
                 } else {
                     val isRelativeVolume = data[NotificationData.RELATIVE_VOLUME]?.toBoolean() == true
                     processStreamVolume(
-                        audioManager!!,
                         data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt(),
                         isRelativeVolume,
@@ -1886,7 +1883,6 @@ class MessagingManager @Inject constructor(
     }
 
     private fun processStreamVolume(
-        audioManager: AudioManager,
         stream: String,
         volume: Int,
         isRelative: Boolean,
@@ -1905,10 +1901,11 @@ class MessagingManager @Inject constructor(
             }
         }
 
-        adjustVolumeStream(streamType, volume, audioManager, isRelative)
+        adjustVolumeStream(streamType, volume, isRelative)
     }
 
-    private fun adjustVolumeStream(streamType: Int, volume: Int, audioManager: AudioManager, isRelative: Boolean) {
+    private fun adjustVolumeStream(streamType: Int, volume: Int, isRelative: Boolean) {
+        val audioManager = context.getSystemService<AudioManager>()!!
         val volumeLevel = if (isRelative) {
             // Get current volume and add/subtract the adjustment
             val currentVolume = audioManager.getStreamVolume(streamType)
